@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.example.task_time_tracker.controller.TaskControllerTest
 -------------------------------------------------------------------------------
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.476 s -- in com.example.task_time_tracker.controller.TaskControllerTest
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.430 s -- in com.example.task_time_tracker.controller.TaskControllerTest

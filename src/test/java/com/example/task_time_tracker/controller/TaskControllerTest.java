@@ -23,99 +23,93 @@ import static org.hamcrest.Matchers.is;
 
 class TaskControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+	@Autowired
+	private MockMvc mockMvc;
 
-    @MockBean
-    private TaskService taskService;
+	@MockBean
+	private TaskService taskService;
 
-    @Autowired
-    private ObjectMapper objectMapper; // For converting objects to JSON
+	@Autowired
+	private ObjectMapper objectMapper; // For converting objects to JSON
 
-    @Test
-    void taskPerformed_validRequest_returnsOk() throws Exception {
-        String taskId = "taskA";
-        TaskRequest taskRequest = new TaskRequest();
-        taskRequest.setDuration(150L);
+	@Test
+	void taskPerformed_validRequest_returnsOk() throws Exception {
+		String taskId = "taskA";
+		TaskRequest taskRequest = new TaskRequest();
+		taskRequest.setDuration(150L);
 
-        doNothing().when(taskService).recordTaskPerformed(taskId, 150L);
+		doNothing().when(taskService).recordTaskPerformed(taskId, 150L);
 
-        mockMvc.perform(post("/tasks/{taskId}", taskId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(taskRequest)))
-                .andExpect(status().isOk());
+		mockMvc.perform(post("/tasks/{taskId}", taskId).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(taskRequest))).andExpect(status().isOk());
 
-        verify(taskService).recordTaskPerformed(taskId, 150L);
-    }
+		verify(taskService).recordTaskPerformed(taskId, 150L);
+	}
 
-    @Test
-    void taskPerformed_emptyTaskId_returnsBadRequest() throws Exception {
-        TaskRequest taskRequest = new TaskRequest();
-        taskRequest.setDuration(100L);
+	@Test
+	void taskPerformed_emptyTaskId_returnsBadRequest() throws Exception {
+		TaskRequest taskRequest = new TaskRequest();
+		taskRequest.setDuration(100L);
 
-        mockMvc.perform(post("/tasks/ ") // Empty taskId
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(taskRequest)))
-                .andExpect(status().isBadRequest());
+		mockMvc.perform(post("/tasks/ ") // Empty taskId
+				.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(taskRequest)))
+				.andExpect(status().isBadRequest());
 
-        verify(taskService, never()).recordTaskPerformed(anyString(), anyLong());
-    }
-    
-    @Test
-    void taskPerformed_negativeDuration_returnsBadRequest() throws Exception {
-        String taskId = "taskB";
-        TaskRequest taskRequest = new TaskRequest();
-        taskRequest.setDuration(-50L); // Invalid duration
+		verify(taskService, never()).recordTaskPerformed(anyString(), anyLong());
+	}
 
-        // This test relies on @Valid and the GlobalExceptionHandler for MethodArgumentNotValidException
-        // or direct service throwing IllegalArgumentException if validation is at service layer for this
-        // In your DTO, @Min(0) handles this.
+	@Test
+	void taskPerformed_negativeDuration_returnsBadRequest() throws Exception {
+		String taskId = "taskB";
+		TaskRequest taskRequest = new TaskRequest();
+		taskRequest.setDuration(-50L); // Invalid duration
 
-        mockMvc.perform(post("/tasks/{taskId}", taskId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(taskRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("Validation Failed")))
-                .andExpect(jsonPath("$.messages", is("Duration must be a non-negative value")));
-        
-        verify(taskService, never()).recordTaskPerformed(anyString(), anyLong());
-    }
+		// This test relies on @Valid and the GlobalExceptionHandler for
+		// MethodArgumentNotValidException
+		// or direct service throwing IllegalArgumentException if validation is at
+		// service layer for this
+		// In your DTO, @Min(0) handles this.
 
+		mockMvc.perform(post("/tasks/{taskId}", taskId).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(taskRequest))).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.error", is("Validation Failed")))
+				.andExpect(jsonPath("$.messages", is("Duration must be a non-negative value")));
 
-    @Test
-    void getCurrentAverageTime_taskExists_returnsOkWithData() throws Exception {
-        String taskId = "taskC";
-        TaskResponseTime responseDto = new TaskResponseTime(taskId, 125.5);
+		verify(taskService, never()).recordTaskPerformed(anyString(), anyLong());
+	}
 
-        when(taskService.getCurrentAverageTime(taskId)).thenReturn(responseDto);
+	@Test
+	void getCurrentAverageTime_taskExists_returnsOkWithData() throws Exception {
+		String taskId = "taskC";
+		TaskResponseTime responseDto = new TaskResponseTime(taskId, 125.5);
 
-        mockMvc.perform(get("/tasks/{taskId}/average", taskId))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.taskId", is(taskId)))
-                .andExpect(jsonPath("$.averageDuration", is(125.5)));
+		when(taskService.getCurrentAverageTime(taskId)).thenReturn(responseDto);
 
-        verify(taskService).getCurrentAverageTime(taskId);
-    }
+		mockMvc.perform(get("/tasks/{taskId}/average", taskId)).andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.taskId", is(taskId))).andExpect(jsonPath("$.averageDuration", is(125.5)));
 
-    @Test
-    void getCurrentAverageTime_taskNotFound_returnsNotFound() throws Exception {
-        String taskId = "nonExistentTask";
+		verify(taskService).getCurrentAverageTime(taskId);
+	}
 
-        when(taskService.getCurrentAverageTime(taskId)).thenThrow(new TaskNotFoundException("Task with ID '" + taskId + "' not found."));
+	@Test
+	void getCurrentAverageTime_taskNotFound_returnsNotFound() throws Exception {
+		String taskId = "nonExistentTask";
 
-        mockMvc.perform(get("/tasks/{taskId}/average", taskId))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message", is("Task with ID '" + taskId + "' not found.")));
+		when(taskService.getCurrentAverageTime(taskId))
+				.thenThrow(new TaskNotFoundException("Task with ID '" + taskId + "' not found."));
 
-        verify(taskService).getCurrentAverageTime(taskId);
-    }
-    
-    @Test
-    void getCurrentAverageTime_emptyTaskId_returnsBadRequest() throws Exception {
-        mockMvc.perform(get("/tasks/ /average")) // Empty taskId
-                .andExpect(status().isBadRequest());
+		mockMvc.perform(get("/tasks/{taskId}/average", taskId)).andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message", is("Task with ID '" + taskId + "' not found.")));
 
-        verify(taskService, never()).getCurrentAverageTime(anyString());
-    }
+		verify(taskService).getCurrentAverageTime(taskId);
+	}
+
+	@Test
+	void getCurrentAverageTime_emptyTaskId_returnsBadRequest() throws Exception {
+		mockMvc.perform(get("/tasks/ /average")) // Empty taskId
+				.andExpect(status().isBadRequest());
+
+		verify(taskService, never()).getCurrentAverageTime(anyString());
+	}
 }

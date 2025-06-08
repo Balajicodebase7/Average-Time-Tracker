@@ -1,6 +1,5 @@
 package com.example.task_time_tracker.exception;
 
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -52,4 +51,3 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 }
-

@@ -1,7 +1,5 @@
 package com.example.task_time_tracker.service;
 
-
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Important for data consistency
@@ -60,4 +58,3 @@ public class TaskService {
 		return new TaskResponseTime(taskDetails.getTaskId(), taskDetails.getAverageDuration());
 	}
 }
-
