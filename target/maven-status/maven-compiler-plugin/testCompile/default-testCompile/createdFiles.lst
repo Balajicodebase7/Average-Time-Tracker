@@ -1,0 +1,3 @@
+com\example\task_time_tracker\service\TaskServiceTest.class
+com\example\task_time_tracker\TaskTimeTrackerApplicationTests.class
+com\example\task_time_tracker\controller\TaskControllerTest.class

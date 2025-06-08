@@ -1,0 +1,49 @@
+version: '3.8' # Using version 3.8 for recent features and compatibility
+
+services:
+  # MySQL Database Service
+  mysql_db:
+    image: mysql:8.0 # Using MySQL 8.0, you can choose another stable version if needed
+    container_name: tasktracker_mysql # A readable name for your MySQL container
+    environment:
+      MYSQL_ROOT_PASSWORD: your_root_password_change_me! # IMPORTANT: Change this to a strong password
+      MYSQL_DATABASE: tasktrackerdb                     # Database name for your application
+      MYSQL_USER: taskuser                              # Username for your application to connect with
+      MYSQL_PASSWORD: securepassword                    # Password for the 'taskuser' (IMPORTANT: Change this)
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no' # Explicitly disallow empty passwords for security
+    ports:
+      - "3310:3306" # Maps MySQL port from container (3306) to your host machine (3310)
+                    # This allows you to connect to MySQL from your host (e.g., MySQL Workbench)
+    volumes:
+      - mysql_data:/var/lib/mysql # Persistent storage for MySQL data. Data will survive container restarts/recreations.
+      # - ./mysql_init_scripts:/docker-entrypoint-initdb.d # Optional: Uncomment to run custom SQL scripts on first startup
+    healthcheck: # Ensures MySQL is fully ready before the dependent 'app' service starts
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"] # Command to check MySQL status
+      timeout: 10s # Timeout for the healthcheck command
+      retries: 5 # Number of retries before marking as unhealthy
+      start_period: 30s # Time to wait before starting healthchecks (allows MySQL to boot)
+
+  # Spring Boot Application Service
+  app:
+    build: . # Tells Docker Compose to build the image for this service using the Dockerfile in the current directory
+    container_name: tasktracker_app # A readable name for your application container
+    ports:
+      - "9000:9000" # Maps your application's port from container (9000) to your host machine (9000)
+    environment:
+      # These environment variables override the properties in application.properties
+      # They point to the 'mysql_db' service's name within the Docker Compose internal network.
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_db:3306/tasktrackerdb?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: taskuser
+      SPRING_DATASOURCE_PASSWORD: securepassword
+    depends_on: # Defines dependencies; 'app' will only start after 'mysql_db' is up and healthy
+      mysql_db:
+        condition: service_healthy # Ensures 'mysql_db' passes its health check before 'app' starts
+    # Optional: Configure logging for your application container
+    # logging:
+    #   driver: "json-file"
+    #   options:
+    #     max-size: "10m"
+    #     max-file: "5"
+
+volumes:
+  mysql_data: # Define the named volume to ensure data persistence for MySQL

@@ -1,0 +1,9 @@
+com\example\task_time_tracker\repository\TaskDetailsRepository.class
+com\example\task_time_tracker\exception\TaskNotFoundException.class
+com\example\task_time_tracker\controller\TaskController.class
+com\example\task_time_tracker\TaskTimeTrackerApplication.class
+com\example\task_time_tracker\exception\GlobalExceptionHandler.class
+com\example\task_time_tracker\model\TaskDetails.class
+com\example\task_time_tracker\service\TaskService.class
+com\example\task_time_tracker\dto\TaskRequest.class
+com\example\task_time_tracker\dto\TaskResponseTime.class
